@@ -32,9 +32,22 @@ const ExperienceForm = ({ data, onChange }) => {
   };
 
   const generateDescription = async (index) => {
-    setGeneratingIndex(index);
     const experience = data[index];
-    const prompt = `enhance this job description ${experience.description} for the position of ${experience.position} at ${experience.company}.`;
+
+    // Require at least one of position/company/description to build a prompt
+    if (!(experience.position || experience.company || experience.description)) {
+      toast.error('Add a company, position or some description to use AI enhancement');
+      return;
+    }
+
+    if (!token) {
+      toast.error('You must be signed in to use AI features');
+      return;
+    }
+
+    setGeneratingIndex(index);
+
+    const prompt = `enhance this job description ${experience.description || ''} for the position of ${experience.position || ''} at ${experience.company || ''}.`;
 
     try {
       const { data } = await api.post(
@@ -45,7 +58,8 @@ const ExperienceForm = ({ data, onChange }) => {
 
       updateExperience(index, "description", data.enhancedContent);
     } catch (error) {
-      toast.error(error.message);
+      const msg = error?.response?.data?.message || error?.message || 'Failed to generate description';
+      toast.error(msg);
     } finally {
       setGeneratingIndex(-1);
     }
@@ -157,8 +171,14 @@ const ExperienceForm = ({ data, onChange }) => {
                     onClick={() => generateDescription(index)}
                     disabled={
                       generatingIndex === index ||
-                      !experience.position ||
-                      !experience.company
+                      !(experience.position || experience.company || experience.description)
+                    }
+                    title={
+                      generatingIndex === index
+                        ? 'Generating...'
+                        : !(experience.position || experience.company || experience.description)
+                        ? 'Add a company, position or description to use AI enhancement'
+                        : 'Enhance job description with AI'
                     }
                   >
                     {generatingIndex === index ? (
