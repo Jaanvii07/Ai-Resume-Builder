@@ -90,7 +90,7 @@ export const updateResume = async (req, res) => {
       resumeDataCopy = await JSON.parse(resumeData);
     } else {
       resumeDataCopy = structuredClone(resumeData);
-    }
+  }
 
     if (image) {
       const imageBufferData = fs.createReadStream(image.path);
